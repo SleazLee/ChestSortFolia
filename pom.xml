@@ -14,7 +14,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <java.version>1.8</java.version>
+        <java.version>17</java.version>
 
         <spigot.prefix>${project.name}</spigot.prefix>
         <spigot.main>${project.groupId}.chestsort.ChestSortPlugin</spigot.main>
@@ -193,12 +193,29 @@
 
     </repositories>
 
+    <!--
+        Dependency review for Folia compatibility:
+        - paper-api: provides Folia scheduler, no fork required
+        - SpigotUpdateChecker: may rely on Bukkit tasks; fork if issues appear
+        - MorePersistentDataTypes: data container only, should work as-is
+        - yaml-commands: command helper; likely no scheduler usage
+        - jefflib: may schedule tasks; monitor for a Folia-aware release
+        - InvUnload: external plugin hook; depends on upstream support
+        - placeholderapi: widely used; expect Paper compatibility
+        - annotations: compile-time only; unaffected
+        - bstats-bukkit: uses Bukkit async tasks; consider Folia update
+        - Minepacks-API: depends on plugin; check for Folia build
+        - Slimefun4: large plugin; verify upstream Folia support
+        - paperlib: already from Paper; should be fine
+        - AdvancedChestsAPI: check for Folia support if used extensively
+    -->
+
     <dependencies>
 
         <dependency>
-            <groupId>org.spigotmc</groupId>
-            <artifactId>spigot-api</artifactId>
-            <version>1.16.1-R0.1-SNAPSHOT</version>
+            <groupId>io.papermc.paper</groupId>
+            <artifactId>paper-api</artifactId>
+            <version>1.20.4-R0.1-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
 
@@ -230,12 +247,6 @@
             <scope>compile</scope>
         </dependency>
 
-        <dependency>
-            <groupId>de.jeff_media</groupId>
-            <artifactId>InvUnload</artifactId>
-            <version>4.17.1</version>
-            <scope>provided</scope>
-        </dependency>
 
         <dependency>
             <groupId>me.clip</groupId>
@@ -258,25 +269,7 @@
             <scope>compile</scope>
         </dependency>
 
-        <dependency>
-            <groupId>at.pcgamingfreaks</groupId>
-            <artifactId>Minepacks-API</artifactId>
-            <version>2.3.24</version>
-            <scope>provided</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.jetbrains</groupId>
-                    <artifactId>annotations</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
 
-        <dependency>
-            <groupId>com.github.Slimefun</groupId>
-            <artifactId>Slimefun4</artifactId>
-            <version>RC-37</version>
-            <scope>provided</scope>
-        </dependency>
 
         <dependency>
             <groupId>io.papermc</groupId>
@@ -285,12 +278,6 @@
             <scope>compile</scope>
         </dependency>
 
-        <dependency>
-            <groupId>com.github.DeadSilenceIV</groupId>
-            <artifactId>AdvancedChestsAPI</artifactId>
-            <version>3.1-BETA</version>
-            <scope>provided</scope>
-        </dependency>
 
     </dependencies>
 

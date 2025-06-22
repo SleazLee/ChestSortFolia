@@ -1,7 +1,7 @@
 package de.jeff_media.chestsort.data;
 
 import de.jeff_media.chestsort.ChestSortPlugin;
-import org.bukkit.Bukkit;
+import de.jeff_media.chestsort.Scheduler;
 import org.bukkit.inventory.Inventory;
 
 public class PlayerSetting {
@@ -62,7 +62,7 @@ public class PlayerSetting {
 		}
 		if(currentDoubleClick != click) {
 			currentDoubleClick = click;
-			Bukkit.getScheduler().runTaskLater(plugin, () -> currentDoubleClick = DoubleClickType.NONE, 10);
+                        Scheduler.runLater(() -> currentDoubleClick = DoubleClickType.NONE, 10);
 			return DoubleClickType.NONE;
 		}
 		return DoubleClickType.NONE;

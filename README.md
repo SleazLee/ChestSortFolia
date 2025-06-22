@@ -26,3 +26,25 @@ More information about the API can be found [HERE](https://github.com/JEFF-Media
 
 ChestSort takes an instance of org.bukkit.inventory.Inventory and copies the contents. The resulting array is sorted by rules defined in the config.yml. This takes far less than one millisecond for a whole chest. So there should be no problems even on big servers, where hundreds of players are using chests at the same time.
 The plugin should cause no lag at all.
+
+## Updating to ChestSort Folia Fork
+
+This fork modernizes ChestSort with Folia scheduler support and cleans up
+several optional dependencies. Below is a quick summary of the most relevant
+changes compared to upstream:
+
+* **Paper API** – The project now depends on the Paper API instead of Spigot.
+  Folia's scheduler classes are included by Paper, so no additional Folia
+  dependency is required.
+* **Custom Scheduler** – A new `Scheduler` utility transparently switches
+  between Folia and legacy Bukkit task scheduling.  This means the rest of the
+  plugin can schedule tasks without caring about the server type.
+* **Removed plugin hooks** – Hooks for various optional plugins such as
+  InventoryPages and Minepacks have been dropped.  Only PlaceholderAPI is kept
+  as a soft dependency.
+* **Plugin metadata** – `plugin.yml` declares `folia-supported: true` so Folia
+  servers can load the plugin without warnings.
+
+When updating from older versions, allow the plugin to regenerate
+`config.yml` so all new settings are applied. The rest of the plugin
+remains compatible with existing permissions and commands.

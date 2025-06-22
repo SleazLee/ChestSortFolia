@@ -10,12 +10,9 @@ import de.jeff_media.chestsort.data.PlayerSetting;
 import de.jeff_media.chestsort.enums.Hotkey;
 import de.jeff_media.chestsort.events.ChestSortLeftClickHotkeyEvent;
 import de.jeff_media.chestsort.handlers.Logger;
-import de.jeff_media.chestsort.hooks.AdvancedChestsHook;
 import de.jeff_media.chestsort.hooks.CrateReloadedHook;
 import de.jeff_media.chestsort.hooks.GoldenCratesHook;
 import de.jeff_media.chestsort.hooks.HeadDatabaseHook;
-import de.jeff_media.chestsort.hooks.MinepacksHook;
-import de.jeff_media.chestsort.hooks.ShulkerPacksHook;
 import de.jeff_media.chestsort.utils.LlamaUtils;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
@@ -65,18 +62,14 @@ public class ChestSortListener implements org.bukkit.event.Listener {
         }
     };
     private static Event ignoredEvent;
-    public final MinepacksHook minepacksHook;
     final ChestSortPlugin plugin;
     final HeadDatabaseHook headDatabaseHook;
     final GoldenCratesHook goldenCratesHook;
-    final AdvancedChestsHook advancedChestsHook;
 
     public ChestSortListener(ChestSortPlugin plugin) {
         this.plugin = plugin;
-        this.minepacksHook = new MinepacksHook(plugin);
         this.headDatabaseHook = new HeadDatabaseHook(plugin);
         this.goldenCratesHook = new GoldenCratesHook(plugin);
-        this.advancedChestsHook = new AdvancedChestsHook(plugin);
     }
 
     private boolean isPossiblyBlacklisted(InventoryView view, InventoryHolder topHolder) {
@@ -186,13 +179,7 @@ public class ChestSortListener implements org.bukkit.event.Listener {
         Container containerState = (Container) state;
         Inventory inventory = containerState.getInventory();
 
-        try {
-            if (!advancedChestsHook.handleAChestSortingIfPresent(clickedBlock.getLocation())) {
-                plugin.getOrganizer().sortInventory(inventory);
-            }
-        } catch (Throwable ignored) {
-            // TODO: Remove when everyone updated AdvancedChests
-        }
+        plugin.getOrganizer().sortInventory(inventory);
         event.getPlayer()
                 .spigot()
                 .sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(Messages.MSG_CONTAINER_SORTED));
@@ -216,42 +203,6 @@ public class ChestSortListener implements org.bukkit.event.Listener {
         plugin.unregisterPlayer(event.getPlayer());
     }
 
-    @EventHandler
-    public void onBackPackClose(InventoryCloseEvent event) {
-        if (plugin.getConfig().getString("sort-time").equalsIgnoreCase("close") ||
-                plugin.getConfig().getString("sort-time").equalsIgnoreCase("both")) {
-            onBackPackUse(event.getInventory(), (Player) event.getPlayer());
-        }
-    }
-
-    @EventHandler
-    public void onBackPackOpen(InventoryOpenEvent event) {
-        if (plugin.getConfig().getString("sort-time").equalsIgnoreCase("open") ||
-                plugin.getConfig().getString("sort-time").equalsIgnoreCase("both")) {
-            onBackPackUse(event.getInventory(), (Player) event.getPlayer());
-        }
-    }
-
-    void onBackPackUse(Inventory inv, Player p) {
-        if (!plugin.getConfig().getBoolean("allow-automatic-sorting")) {
-            return; //TODO: Maybe change to allow-automatic-inventory-sorting ?
-        }
-        if (!minepacksHook.isMinepacksBackpack(inv, inv.getHolder())) {
-            return;
-        }
-        if (!p.hasPermission("chestsort.use")) {
-            return;
-        }
-        if (!p.hasPermission("chestsort.automatic")) {
-            return;
-        }
-        plugin.registerPlayerIfNeeded(p);
-        PlayerSetting setting = plugin.getPerPlayerSettings().get(p.getUniqueId().toString());
-        if (!setting.sortingEnabled) {
-            return;
-        }
-        plugin.getOrganizer().sortInventory(inv);
-    }
 
     @EventHandler
     public void onPlayerInventoryClose(InventoryCloseEvent event) {
@@ -345,9 +296,7 @@ public class ChestSortListener implements org.bukkit.event.Listener {
         }
 
         if (!isAPICall(inventory, holder) && !belongsToChestLikeBlock(inventory, holder) &&
-                !plugin.getEnderContainersHook().isEnderchest(inventory, holder) &&
                 !LlamaUtils.belongsToLlama(inventory, holder) &&
-                !advancedChestsHook.isAnAdvancedChest(inventory) &&
                 !plugin.getOrganizer().isMarkedAsSortable(inventory)) {
             return;
         }
@@ -364,11 +313,6 @@ public class ChestSortListener implements org.bukkit.event.Listener {
         if (LlamaUtils.belongsToLlama(inventory, holder)) {
             ChestedHorse llama = (ChestedHorse) holder;
             plugin.getOrganizer().sortInventory(inventory, 2, LlamaUtils.getLlamaChestSize(llama) + 1);
-            return;
-        }
-
-        // If the involved inventory belongs to an AdvancedChest, sort all the pages.
-        if (advancedChestsHook.handleAChestSortingIfPresent(inventory)) {
             return;
         }
 
@@ -413,8 +357,7 @@ public class ChestSortListener implements org.bukkit.event.Listener {
         }
 
         if (!isAPICall(inventory, holder) && !belongsToChestLikeBlock(inventory, holder) &&
-                !plugin.getEnderContainersHook().isEnderchest(inventory, holder) && !LlamaUtils.belongsToLlama(inventory, holder) &&
-                !advancedChestsHook.isAnAdvancedChest(inventory) &&
+                !LlamaUtils.belongsToLlama(inventory, holder) &&
                 !plugin.getOrganizer().isMarkedAsSortable(inventory)) {
             return;
         }
@@ -431,11 +374,6 @@ public class ChestSortListener implements org.bukkit.event.Listener {
         if (LlamaUtils.belongsToLlama(inventory, holder)) {
             ChestedHorse llama = (ChestedHorse) holder;
             plugin.getOrganizer().sortInventory(inventory, 2, LlamaUtils.getLlamaChestSize(llama) + 1);
-            return;
-        }
-
-        // If the involved inventory belongs to an AdvancedChest, sort all the pages.
-        if (advancedChestsHook.handleAChestSortingIfPresent(inventory)) {
             return;
         }
 
@@ -727,11 +665,7 @@ public class ChestSortListener implements org.bukkit.event.Listener {
         if (isAPICall || belongsToChestLikeBlock(clicked, holder) || (clicked != null &&
                 clicked.getType() == InventoryType.HOPPER) ||
                 plugin.getOrganizer().isMarkedAsSortable(clicked) ||
-                LlamaUtils.belongsToLlama(clicked, holder) ||
-                minepacksHook.isMinepacksBackpack(clicked, holder) ||
-                plugin.getPlayerVaultsHook().isPlayerVault(clicked, holder) ||
-                plugin.getEnderContainersHook().isEnderchest(clicked, holder) ||
-                advancedChestsHook.isAnAdvancedChest(clicked)) {
+                LlamaUtils.belongsToLlama(clicked, holder)) {
 
             if (!p.hasPermission("chestsort.use")) {
                 return;
@@ -743,11 +677,6 @@ public class ChestSortListener implements org.bukkit.event.Listener {
                 ChestedHorse llama = (ChestedHorse) topHolder;
                 plugin.getOrganizer()
                         .sortInventory(clicked, 2, LlamaUtils.getLlamaChestSize(llama) + 1);
-                plugin.getOrganizer().updateInventoryView(event);
-                return;
-            }
-
-            if (advancedChestsHook.handleAChestSortingIfPresent(inventory)) {
                 plugin.getOrganizer().updateInventoryView(event);
                 return;
             }
@@ -820,8 +749,7 @@ public class ChestSortListener implements org.bukkit.event.Listener {
             return;
         }
 
-        boolean isAdvancedChest = advancedChestsHook.isAnAdvancedChest(clickedInventory) ||
-                advancedChestsHook.isAnAdvancedChest(inventory);
+        boolean isAdvancedChest = false;
 
         // Possible fix for #57
         if (holder == null && !view.getTopInventory().equals(player.getEnderChest()) &&
@@ -884,10 +812,6 @@ public class ChestSortListener implements org.bukkit.event.Listener {
             return;
         }
 
-        // ShulkerPacks
-        if (ShulkerPacksHook.isOpenShulkerView(holder)) {
-            return;
-        }
 
         if (!player.hasPermission("chestsort.use")) {
             return;

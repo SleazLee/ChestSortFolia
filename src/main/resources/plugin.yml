@@ -2,6 +2,7 @@ main: ${spigot.main}
 name: ${project.name}
 version: ${project.version}
 api-version: "1.13"
+folia-supported: true
 description: "${project.description}"
 authors:
   - mfnalex
@@ -9,8 +10,7 @@ authors:
 website: ${project.url}
 prefix: ${spigot.prefix}
 database: false
-loadbefore: [InvUnload]
-softdepend: [CrackShot,InventoryPages,Minepacks,PlaceholderAPI,AdvancedChests,ShulkerPacks]
+softdepend: [PlaceholderAPI]
 commands:
   sort:
     description: Toggle automatic chest sorting or change your hotkey settings

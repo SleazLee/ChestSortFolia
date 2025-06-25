@@ -543,6 +543,7 @@ public class ChestSortOrganizer {
         for (int i = endSlot + 1; i < inv.getSize(); i++) {
             items[i] = null;
         }
+      
         // Check for
         // - Minepacks backpacks
         // - Inventorypages buttons

@@ -35,7 +35,7 @@ changes compared to upstream:
 
 * **Paper API** – The project now depends on the Paper API instead of Spigot.
   Folia's scheduler classes are included by Paper, so no additional Folia
-  dependency is required. The minimum recommended version is Paper **1.20.6**.
+  dependency is required.
 * **Custom Scheduler** – A new `Scheduler` utility transparently switches
   between Folia and legacy Bukkit task scheduling.  This means the rest of the
   plugin can schedule tasks without caring about the server type.

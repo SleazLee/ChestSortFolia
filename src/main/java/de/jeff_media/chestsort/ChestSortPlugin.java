@@ -51,7 +51,6 @@ import de.jeff_media.chestsort.utils.Utils;
 import com.jeff_media.jefflib.JeffLib;
 import com.jeff_media.jefflib.data.McVersion;
 import com.jeff_media.jefflib.NBTAPI;
-import io.papermc.lib.PaperLib;
 import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -415,12 +414,10 @@ public class ChestSortPlugin extends JavaPlugin {
             } else {
                 getLogger().severe("You are using an unsupported server software! Consider switching to Spigot or Paper!");
                 getLogger().severe("The Update Checker will NOT work when using CraftBukkit instead of Spigot/Paper!");
-                PaperLib.suggestPaper(this);
             }
         } catch (ClassNotFoundException e) {
             getLogger().severe("You are using an unsupported server software! Consider switching to Spigot or Paper!");
             getLogger().severe("The Update Checker will NOT work when using CraftBukkit instead of Spigot/Paper!");
-            PaperLib.suggestPaper(this);
         }
         setListener(new ChestSortListener(this));
         setHotkeyCooldown(new HashMap<>());

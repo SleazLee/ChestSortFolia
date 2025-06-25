@@ -532,19 +532,6 @@ public class ChestSortOrganizer {
         for (int i = endSlot + 1; i < inv.getSize(); i++) {
             items[i] = null;
         }
-        // Check for
-        // - Minepacks backpacks
-        // - Inventorypages buttons
-        // - ItemStacks with more than 64 items
-        for (int i = startSlot; i <= endSlot; i++) {
-            if ((plugin.getConfig().getBoolean("dont-move-slimefun-backpacks") && SlimeFunHook.isSlimefunBackpack(items[i]))
-                    || isOversizedStack(items[i])
-                    || chestSortEvent.isUnmovable(i)
-                    || chestSortEvent.isUnmovable(items[i])) {
-                items[i] = null;
-                unsortableSlots.add(i);
-            }
-        }
 
 
         // Remove the stuff from the original inventory

@@ -5,10 +5,6 @@ import de.jeff_media.chestsort.api.ChestSortEvent;
 import de.jeff_media.chestsort.api.ChestSortPostSortEvent;
 import de.jeff_media.chestsort.data.Category;
 import de.jeff_media.chestsort.data.CategoryLinePair;
-import de.jeff_media.chestsort.hooks.CrackShotHook;
-import de.jeff_media.chestsort.hooks.InventoryPagesHook;
-import de.jeff_media.chestsort.hooks.ShulkerPacksHook;
-import de.jeff_media.chestsort.hooks.SlimeFunHook;
 import de.jeff_media.chestsort.utils.EnchantmentUtils;
 import de.jeff_media.chestsort.utils.TypeMatchPositionPair;
 import de.jeff_media.chestsort.utils.Utils;
@@ -24,7 +20,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.PotionMeta;
-import org.bukkit.potion.PotionData;
+import org.bukkit.potion.PotionType;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -64,8 +60,6 @@ public class ChestSortOrganizer {
     // We store a list of all Category objects
     public final ArrayList<Category> categories = new ArrayList<>();
     final ChestSortPlugin plugin;
-    final CrackShotHook crackShotHook;
-    final InventoryPagesHook inventoryPagesHook;
     final ArrayList<String> stickyCategoryNames = new ArrayList<>();
     private final WeakHashMap<Inventory, Void> sortableInventories = new WeakHashMap<>();
     private final WeakHashMap<Inventory, Void> unsortableInventories = new WeakHashMap<>();
@@ -115,8 +109,6 @@ public class ChestSortOrganizer {
             }
         }
 
-        crackShotHook = new CrackShotHook(plugin);
-        inventoryPagesHook = new InventoryPagesHook(plugin);
 
     }
 
@@ -397,16 +389,27 @@ public class ChestSortOrganizer {
             ItemMeta meta = item.getItemMeta();
             if (meta instanceof PotionMeta) {
                 PotionMeta potionMeta = (PotionMeta) meta;
-                // Only continue if Method "getBasePotionData" exists
-                Class<? extends PotionMeta> potionMetaClass = potionMeta.getClass();
+                // Try using the modern API first (Paper 1.20.6+)
                 try {
-                    if (potionMeta.getBasePotionData() != null) {
-                        PotionData pdata = potionMeta.getBasePotionData();
-                        if (pdata != null && pdata.getType() != null && pdata.getType().getEffectType() != null) {
-                            potionEffect = "|" + pdata.getType().getEffectType().getName();
-                        }
+                    PotionType ptype = potionMeta.getBasePotionType();
+                    if (ptype != null && ptype.getEffectType() != null) {
+                        potionEffect = "|" + ptype.getEffectType().getName();
                     }
-                } catch (Throwable ignored) {
+                } catch (NoSuchMethodError ignore) {
+                    // Fallback for older servers using the legacy method
+                    try {
+                        Object data = potionMeta.getClass().getMethod("getBasePotionData").invoke(potionMeta);
+                        if (data != null) {
+                            Object type = data.getClass().getMethod("getType").invoke(data);
+                            Object effect = type.getClass().getMethod("getEffectType").invoke(type);
+                            if (effect != null) {
+                                String name = (String) effect.getClass().getMethod("getName").invoke(effect);
+                                potionEffect = "|" + name;
+                            }
+                        }
+                    } catch (Throwable ignored) {
+                        // ignore
+                    }
                 }
 
                 // potionEffects = potionEffects.substring(0, potionEffects.length()-1);
@@ -414,16 +417,6 @@ public class ChestSortOrganizer {
         }
 
         String hookChangedName = item.getType().name();
-
-        // CrackShot Support Start
-        if (plugin.isHookCrackShot()) {
-            if (crackShotHook.getCrackShotWeaponName(item) != null) {
-                typeName = plugin.getConfig().getString("hook-crackshot-prefix") + "_" + crackShotHook.getCrackShotWeaponName(item);
-                color = "";
-                hookChangedName = typeName;
-            }
-        }
-        // CrackShot Support End
 
         CategoryLinePair categoryLinePair = getCategoryLinePair(hookChangedName);
         String categoryName = categoryLinePair.getCategoryName();
@@ -555,10 +548,7 @@ public class ChestSortOrganizer {
         // - Inventorypages buttons
         // - ItemStacks with more than 64 items
         for (int i = startSlot; i <= endSlot; i++) {
-            if ((plugin.isHookMinepacks() && plugin.getListener().minepacksHook.isMinepacksBackpack(items[i]))
-                    || (plugin.isHookInventoryPages() && inventoryPagesHook.isButton(items[i], i, inv))
-                    || (plugin.getConfig().getBoolean("dont-move-slimefun-backpacks") && SlimeFunHook.isSlimefunBackpack(items[i]))
-                    || ShulkerPacksHook.isOpenShulkerPack(items[i])
+            if ((plugin.getConfig().getBoolean("dont-move-slimefun-backpacks") && SlimeFunHook.isSlimefunBackpack(items[i]))
                     || isOversizedStack(items[i])
                     || chestSortEvent.isUnmovable(i)
                     || chestSortEvent.isUnmovable(items[i])) {
@@ -721,17 +711,8 @@ public class ChestSortOrganizer {
             if (currentItem == null) continue;
             if (chestSortEvent.isUnmovable(i) || chestSortEvent.isUnmovable(currentItem)) continue;
 
-            // This prevents Minepacks from being put into Minepacks
-			/*if(plugin.hookMinepacks && plugin.listener.minepacksHook.isMinepacksBackpack(destination)
-					&& plugin.listener.minepacksHook.isMinepacksBackpack(currentItem)) continue;*/
-            // This prevents Minepacks from being moved at all
-            if (plugin.isHookMinepacks() && plugin.getListener().minepacksHook.isMinepacksBackpack(currentItem))
-                continue;
 
-            if (plugin.isHookInventoryPages()
-                    && plugin.getOrganizer().inventoryPagesHook.isButton(currentItem, i, source)) continue;
 
-            if (ShulkerPacksHook.isOpenShulkerPack(currentItem)) continue;
 
             if (destinationIsShulkerBox && currentItem.getType().name().endsWith("SHULKER_BOX")) continue;
 

@@ -27,7 +27,6 @@
 
 package de.jeff_media.chestsort;
 
-import at.pcgamingfreaks.Minepacks.Bukkit.API.MinepacksPlugin;
 import com.jeff_media.updatechecker.UpdateChecker;
 import de.jeff_media.chestsort.commands.ChestSortCommand;
 import de.jeff_media.chestsort.commands.InvSortCommand;
@@ -45,9 +44,7 @@ import de.jeff_media.chestsort.handlers.ChestSortOrganizer;
 import de.jeff_media.chestsort.handlers.ChestSortPermissionsHandler;
 import de.jeff_media.chestsort.handlers.Debugger;
 import de.jeff_media.chestsort.handlers.Logger;
-import de.jeff_media.chestsort.hooks.EnderContainersHook;
 import de.jeff_media.chestsort.hooks.GenericGUIHook;
-import de.jeff_media.chestsort.hooks.PlayerVaultsHook;
 import de.jeff_media.chestsort.listeners.ChestSortListener;
 import de.jeff_media.chestsort.placeholders.Placeholders;
 import de.jeff_media.chestsort.utils.Utils;
@@ -74,13 +71,7 @@ public class ChestSortPlugin extends JavaPlugin {
     private static ChestSortPlugin instance;
     public ChestSortOrganizer organizer; // Must be public for the API
     boolean hotkeyGUI = true;
-    private EnderContainersHook enderContainersHook;
     private GenericGUIHook genericHook;
-    private boolean hookCrackShot = false;
-    private boolean hookInventoryPages = false;
-    private boolean hookMinepacks = false;
-    private boolean hookAdvancedChests = false;
-    private PlayerVaultsHook playerVaultsHook;
     private boolean debug = false;
     private ArrayList<String> disabledWorlds;
     private HashMap<UUID, Long> hotkeyCooldown;
@@ -221,13 +212,6 @@ public class ChestSortPlugin extends JavaPlugin {
         this.disabledWorlds = disabledWorlds;
     }
 
-    public EnderContainersHook getEnderContainersHook() {
-        return enderContainersHook;
-    }
-
-    public void setEnderContainersHook(EnderContainersHook enderContainersHook) {
-        this.enderContainersHook = enderContainersHook;
-    }
 
     public GenericGUIHook getGenericHook() {
         return genericHook;
@@ -298,13 +282,6 @@ public class ChestSortPlugin extends JavaPlugin {
         return getPerPlayerSettings().get(p.getUniqueId().toString());
     }
 
-    public PlayerVaultsHook getPlayerVaultsHook() {
-        return playerVaultsHook;
-    }
-
-    public void setPlayerVaultsHook(PlayerVaultsHook playerVaultsHook) {
-        this.playerVaultsHook = playerVaultsHook;
-    }
 
     public SettingsGUI getSettingsGUI() {
         return settingsGUI;
@@ -338,37 +315,6 @@ public class ChestSortPlugin extends JavaPlugin {
         this.debug = debug;
     }
 
-    public boolean isHookCrackShot() {
-        return hookCrackShot;
-    }
-
-    public void setHookCrackShot(boolean hookCrackShot) {
-        this.hookCrackShot = hookCrackShot;
-    }
-
-    public boolean isHookInventoryPages() {
-        return hookInventoryPages;
-    }
-
-    public void setHookInventoryPages(boolean hookInventoryPages) {
-        this.hookInventoryPages = hookInventoryPages;
-    }
-
-    public boolean isHookMinepacks() {
-        return hookMinepacks;
-    }
-
-    public void setHookMinepacks(boolean hookMinepacks) {
-        this.hookMinepacks = hookMinepacks;
-    }
-
-    public boolean isHookAdvancedChests() {
-        return hookAdvancedChests;
-    }
-
-    public void setHookAdvancedChests(boolean hookAdvancedChests) {
-        this.hookAdvancedChests = hookAdvancedChests;
-    }
 
     @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     public boolean isHotkeyGUI() {
@@ -438,18 +384,6 @@ public class ChestSortPlugin extends JavaPlugin {
             getServer().getPluginManager().registerEvents(debugger, this);
         }
 
-        setHookCrackShot(getConfig().getBoolean("hook-crackshot")
-                && Bukkit.getPluginManager().getPlugin("CrackShot") != null);
-
-        setHookInventoryPages(getConfig().getBoolean("hook-inventorypages")
-                && Bukkit.getPluginManager().getPlugin("InventoryPages") != null);
-
-        setHookMinepacks(getConfig().getBoolean("hook-minepacks")
-                && Bukkit.getPluginManager().getPlugin("Minepacks") instanceof MinepacksPlugin);
-
-        setHookAdvancedChests(getConfig().getBoolean("hook-advancedchests")
-                && Bukkit.getPluginManager().getPlugin("AdvancedChests") != null);
-
         setGenericHook(new GenericGUIHook(this, getConfig().getBoolean("hook-generic")));
 
         saveDefaultCategories();
@@ -493,8 +427,6 @@ public class ChestSortPlugin extends JavaPlugin {
         setPermissionsHandler(new ChestSortPermissionsHandler(this));
         setUpdateCheckInterval(getConfig().getDouble("check-interval"));
         setSortingMethod(getConfig().getString("sorting-method"));
-        setPlayerVaultsHook(new PlayerVaultsHook(this));
-        setEnderContainersHook(new EnderContainersHook(this));
         getServer().getPluginManager().registerEvents(getListener(), this);
         getServer().getPluginManager().registerEvents(getSettingsGUI(), this);
         getServer().getPluginManager().registerEvents(new GUIListener(), this);
@@ -879,10 +811,6 @@ public class ChestSortPlugin extends JavaPlugin {
         getConfig().addDefault("log", false);
         getConfig().addDefault("allow-commands", true);
 
-        getConfig().addDefault("hook-crackshot", true);
-        getConfig().addDefault("hook-crackshot-prefix", "crackshot_weapon");
-        getConfig().addDefault("hook-inventorypages", true);
-        getConfig().addDefault("hook-minepacks", true);
         getConfig().addDefault("hook-generic", true);
         getConfig().addDefault("prevent-sorting-null-inventories", false);
 

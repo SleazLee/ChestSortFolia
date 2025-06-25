@@ -20,7 +20,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.PotionMeta;
-import org.bukkit.potion.PotionData;
+import org.bukkit.potion.PotionType;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -389,16 +389,27 @@ public class ChestSortOrganizer {
             ItemMeta meta = item.getItemMeta();
             if (meta instanceof PotionMeta) {
                 PotionMeta potionMeta = (PotionMeta) meta;
-                // Only continue if Method "getBasePotionData" exists
-                Class<? extends PotionMeta> potionMetaClass = potionMeta.getClass();
+                // Try using the modern API first (Paper 1.20.6+)
                 try {
-                    if (potionMeta.getBasePotionData() != null) {
-                        PotionData pdata = potionMeta.getBasePotionData();
-                        if (pdata != null && pdata.getType() != null && pdata.getType().getEffectType() != null) {
-                            potionEffect = "|" + pdata.getType().getEffectType().getName();
-                        }
+                    PotionType ptype = potionMeta.getBasePotionType();
+                    if (ptype != null && ptype.getEffectType() != null) {
+                        potionEffect = "|" + ptype.getEffectType().getName();
                     }
-                } catch (Throwable ignored) {
+                } catch (NoSuchMethodError ignore) {
+                    // Fallback for older servers using the legacy method
+                    try {
+                        Object data = potionMeta.getClass().getMethod("getBasePotionData").invoke(potionMeta);
+                        if (data != null) {
+                            Object type = data.getClass().getMethod("getType").invoke(data);
+                            Object effect = type.getClass().getMethod("getEffectType").invoke(type);
+                            if (effect != null) {
+                                String name = (String) effect.getClass().getMethod("getName").invoke(effect);
+                                potionEffect = "|" + name;
+                            }
+                        }
+                    } catch (Throwable ignored) {
+                        // ignore
+                    }
                 }
 
                 // potionEffects = potionEffects.substring(0, potionEffects.length()-1);
@@ -531,6 +542,20 @@ public class ChestSortOrganizer {
         // ... and after endSlot
         for (int i = endSlot + 1; i < inv.getSize(); i++) {
             items[i] = null;
+        }
+      
+        // Check for
+        // - Minepacks backpacks
+        // - Inventorypages buttons
+        // - ItemStacks with more than 64 items
+        for (int i = startSlot; i <= endSlot; i++) {
+            if ((plugin.getConfig().getBoolean("dont-move-slimefun-backpacks") && SlimeFunHook.isSlimefunBackpack(items[i]))
+                    || isOversizedStack(items[i])
+                    || chestSortEvent.isUnmovable(i)
+                    || chestSortEvent.isUnmovable(items[i])) {
+                items[i] = null;
+                unsortableSlots.add(i);
+            }
         }
 
 

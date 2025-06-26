@@ -1,6 +1,6 @@
 # ChestSort
 
-1.8 to 1.19.3 compatible Minecraft-/Spigot-Plugin to allow automatic chest and inventory sorting.
+1.21.5 compatible Minecraft-/Spigot-Plugin to allow automatic chest and inventory sorting.
 
 ## Download & more information
 

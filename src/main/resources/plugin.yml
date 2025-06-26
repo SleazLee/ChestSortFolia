@@ -1,7 +1,7 @@
 main: ${spigot.main}
 name: ${project.name}
 version: ${project.version}
-api-version: "1.13"
+api-version: "1.21.5"
 folia-supported: true
 description: "${project.description}"
 authors:

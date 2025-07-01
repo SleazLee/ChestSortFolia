@@ -27,7 +27,6 @@
 
 package de.jeff_media.chestsort;
 
-import com.jeff_media.updatechecker.UpdateChecker;
 import de.jeff_media.chestsort.commands.ChestSortCommand;
 import de.jeff_media.chestsort.commands.InvSortCommand;
 import de.jeff_media.chestsort.commands.TabCompleter;
@@ -85,7 +84,6 @@ public class ChestSortPlugin extends JavaPlugin {
     private ChestSortPermissionsHandler permissionsHandler;
     private SettingsGUI settingsGUI;
     private String sortingMethod;
-    private UpdateChecker updateChecker;
     private boolean usingMatchingConfig = true;
     private boolean verbose = true;
     private YamlConfiguration guiConfig = new YamlConfiguration();
@@ -298,14 +296,6 @@ public class ChestSortPlugin extends JavaPlugin {
         this.sortingMethod = sortingMethod;
     }
 
-    public UpdateChecker getUpdateChecker() {
-        return updateChecker;
-    }
-
-    public void setUpdateChecker(UpdateChecker updateChecker) {
-        this.updateChecker = updateChecker;
-    }
-
     public boolean isDebug() {
         return debug;
     }
@@ -368,9 +358,6 @@ public class ChestSortPlugin extends JavaPlugin {
         if (reload) {
             unregisterAllPlayers();
             reloadConfig();
-            if (getUpdateChecker() != null) {
-                getUpdateChecker().stop();
-            }
         }
 
         createConfig();
@@ -406,11 +393,6 @@ public class ChestSortPlugin extends JavaPlugin {
         setSettingsGUI(new SettingsGUI(this));
         try {
             if (Class.forName("net.md_5.bungee.api.chat.BaseComponent") != null) {
-                setUpdateChecker(UpdateChecker.init(this, "https://api.jeff-media.de/chestsort/chestsort-latest-version.txt")
-                        .setChangelogLink("https://www.chestsort.de/changelog")
-                        .setDonationLink("https://paypal.me/mfnalex")
-                        .setDownloadLink("https://www.chestsort.de")
-                        .suppressUpToDateMessage(true));
             } else {
                 getLogger().severe("You are using an unsupported server software! Consider switching to Spigot or Paper!");
                 getLogger().severe("The Update Checker will NOT work when using CraftBukkit instead of Spigot/Paper!");
@@ -466,20 +448,6 @@ public class ChestSortPlugin extends JavaPlugin {
             getLogger().info("Categories: " + getCategoryList());
         }
 
-        if (getUpdateChecker() != null) {
-            if (getConfig().getString("check-for-updates", "true").equalsIgnoreCase("true")) {
-                getUpdateChecker().checkEveryXHours(getUpdateCheckInterval()).checkNow();
-            } // When set to on-startup, we check right now (delay 0)
-            else if (getConfig().getString("check-for-updates", "true").equalsIgnoreCase("on-startup")) {
-                getUpdateChecker().checkNow();
-            }
-        }
-
-        if (getConfig().getString("check-for-updates").equalsIgnoreCase("false")) {
-            getUpdateChecker().setNotifyOpsOnJoin(false);
-        }
-
-        registerMetrics();
 
         if (getConfig().getBoolean("dump")) {
             dump();
@@ -524,59 +492,6 @@ public class ChestSortPlugin extends JavaPlugin {
         if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
             new Placeholders(this).register();
         }
-    }
-
-    private void registerMetrics() {
-        // Metrics will need json-simple with 1.14 API.
-        Metrics bStats = new Metrics(this, 3089);
-
-        bStats.addCustomChart(new Metrics.SimplePie("sorting_method", this::getSortingMethod));
-        bStats.addCustomChart(new Metrics.SimplePie("config_version",
-                () -> Integer.toString(getConfig().getInt("config-version", 0))));
-        bStats.addCustomChart(
-                new Metrics.SimplePie("check_for_updates", () -> getConfig().getString("check-for-updates", "true")));
-        bStats.addCustomChart(
-                new Metrics.SimplePie("update_interval", () -> Double.toString(getUpdateCheckInterval())));
-
-        bStats.addCustomChart(new Metrics.SimplePie("allow_automatic_sorting",
-                () -> Boolean.toString(getConfig().getBoolean("allow-automatic-sorting"))));
-        bStats.addCustomChart(new Metrics.SimplePie("allow_automatic_inv_sorting",
-                () -> Boolean.toString(getConfig().getBoolean("allow-automatic-inventory-sorting"))));
-
-        bStats.addCustomChart(new Metrics.SimplePie("show_message_when_using_chest",
-                () -> Boolean.toString(getConfig().getBoolean("show-message-when-using-chest"))));
-        bStats.addCustomChart(new Metrics.SimplePie("show_message_when_using_chest_and_sorting_is_enabl", () -> Boolean
-                .toString(getConfig().getBoolean("show-message-when-using-chest-and-sorting-is-enabled"))));
-        bStats.addCustomChart(new Metrics.SimplePie("show_message_again_after_logout",
-                () -> Boolean.toString(getConfig().getBoolean("show-message-again-after-logout"))));
-        bStats.addCustomChart(new Metrics.SimplePie("sorting_enabled_by_default",
-                () -> Boolean.toString(getConfig().getBoolean("sorting-enabled-by-default"))));
-        bStats.addCustomChart(new Metrics.SimplePie("inv_sorting_enabled_by_default",
-                () -> Boolean.toString(getConfig().getBoolean("inv-sorting-enabled-by-default"))));
-        bStats.addCustomChart(
-                new Metrics.SimplePie("using_matching_config_version", () -> Boolean.toString(isUsingMatchingConfig())));
-        bStats.addCustomChart(new Metrics.SimplePie("sort_time", () -> getConfig().getString("sort-time")));
-        bStats.addCustomChart(new Metrics.SimplePie("auto_generate_category_files",
-                () -> Boolean.toString(getConfig().getBoolean("auto-generate-category-files"))));
-        bStats.addCustomChart(new Metrics.SimplePie("allow_hotkeys",
-                () -> Boolean.toString(getConfig().getBoolean("allow-sorting-hotkeys"))));
-        bStats.addCustomChart(new Metrics.SimplePie("allow_additional_hotkeys",
-                () -> Boolean.toString(getConfig().getBoolean("allow-additional-hotkeys"))));
-        bStats.addCustomChart(new Metrics.SimplePie("hotkey_middle_click",
-                () -> Boolean.toString(getConfig().getBoolean("sorting-hotkeys.middle-click"))));
-        bStats.addCustomChart(new Metrics.SimplePie("hotkey_shift_click",
-                () -> Boolean.toString(getConfig().getBoolean("sorting-hotkeys.shift-click"))));
-        bStats.addCustomChart(new Metrics.SimplePie("hotkey_double_click",
-                () -> Boolean.toString(getConfig().getBoolean("sorting-hotkeys.double-click"))));
-        bStats.addCustomChart(new Metrics.SimplePie("hotkey_shift_right_click",
-                () -> Boolean.toString(getConfig().getBoolean("sorting-hotkeys.shift-right-click"))));
-        bStats.addCustomChart(new Metrics.SimplePie("hotkey_left_click",
-                () -> Boolean.toString(getConfig().getBoolean("additional-hotkeys.left-click"))));
-        bStats.addCustomChart(new Metrics.SimplePie("hotkey_right_click",
-                () -> Boolean.toString(getConfig().getBoolean("additional-hotkeys.right-click"))));
-        bStats.addCustomChart(new Metrics.SimplePie("use_permissions",
-                () -> Boolean.toString(getConfig().getBoolean("use-permissions"))));
-
     }
 
     public void incrementFingerprint() {
